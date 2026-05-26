@@ -98,3 +98,77 @@ Presenter - презентер содержит основную логику п
 `emit<T extends object>(event: string, data?: T): void` - инициализация события. При вызове события в метод передается название события и объект с данными, который будет использован как аргумент для вызова обработчика.  
 `trigger<T extends object>(event: string, context?: Partial<T>): (data: T) => void` - возвращает функцию, при вызове которой инициализируется требуемое в параметрах событие с передачей в него данных из второго параметра.
 
+#### Interface в index
+IProduct - интерфейс, содержащий в себе данные о товаре
+ interface IProduct {
+  id: string; - содержит в себе идентификатор товара. Строчный тип данных
+  description: string; - описание товара. Строчный тип данных
+  image: string; - содержит путь к изображению товара в формате svg. Строчный тип данных
+  title: string; - название товара. Строчный тип данных
+  category: string; - к какой категории товаров относится данный товар. Строчный тип данных
+  price: number | null; - цена товара. Может принимать тип данных number или null
+} 
+
+IBuyer - интерфейс, содержащий в себе данные о покупателе
+interface IBuyer {
+  payment: TPayment; - тип оплаты. 'card' , 'cash'
+  email: string; - содержит email покупателя. Строчный тип данных
+  phone: string;- содержит номер телефона покупателя. Строчный тип данных
+  address: string; - содержит адрес доставки. Строчный тип данных
+} 
+IProductsResponse - ответ сервера при запросе продуктов
+export interface IProductsResponse {
+    items: IProduct[];
+    total: number;
+}
+IOrderData - расширяет интерфес IBuyer
+export interface IOrderData extends IBuyer {
+    items: string[];   // массив id товаров
+    total: number;     // общая сумма заказа
+}
+
+IOrderResponse -  Ответ сервера после оформления заказа
+export interface IOrderResponse {
+    id: string;
+    total: number;
+}
+#### Класс Products
+Реализует коталог товаров
+  `protected _productArr: IProduct[] = [];` Создает пустой массив для хранения всех товаров
+  `protected _productCard: IProduct | null = null;` - Создает переменную для хранения выбраной карточки. Начальное значение null так как карточка не выбрана.
+  `setItems(items: IProduct[]): void` - принимает массив обектов с товарами
+  `getItems():  IProduct[]`- возвращает массив товаров для дальнейшего использования.
+`setCard(id: string): void` - принимает id товара для выбора карточки
+`getCard():IProduct | null` - передаем полученную карточку
+
+
+##### Класс ShoppingCart
+`private _buyerCart: IProduct[] = [];` - создаем массив товаров пользователя
+`private productsModel: Products;` - передаем массив всех товаров из класса Products
+`constructor(productsModel: Products)`- в конструктор передаем массив всех товаров
+`addToCart(id: string): boolean` - описываем принцип добавления товаров в корзину. Передаем id товара. Метод должен возврачать true - добавлен, false - товар или не найден или на товар нет цены
+`getCart():IProduct[]` - метод возвращает корзину пользователя для дальнейшего использования
+`deleteProduct(id: string): void` - метод создан для удаления товара из корзины
+`clearCart(): void` - метод создан для очистки корзины
+`priceCart():number` - метод создан для подсчета цены в корзине
+`quantityProduct(): number` - метод создан для вывода количества торваров в корзине
+`hasProduct(id: string): boolean` - метод создан чтобы проверить есть ли товар с данным id в корзине
+
+##### Класс Buyer
+` private data: IBuyer` - создает объект с начальными значениями пользователя
+`setPayment(payment: 'card' | 'cash' | null)` - метод определяет значение поля payment
+`setEmail(email: string)` - метод определяет значение поля email
+`setPhone(phone: string)` - метод определяет значение поля phone
+`setAddress(address: string)` - метод определяет значение поля address
+`getData()` - метод получает все значения полей
+`clear()` - метод очищает введенные значения
+`validate()` - метот производит валидацию занчений 
+`isValid(): boolean` - метод проверки валидности всех значений
+
+#### Слой коммуникации
+
+##### Класс CommunicationLayer
+`constructor(private api: Api)` - передаем в constructor api для выполнения запросов к серверу
+`async getProducts(): Promise<IProduct[]>` - получаем объект с массивом товаров
+`async sendOrder(orderData: IOrderData): Promise<IOrderResponse>` - отправление заказа
+
