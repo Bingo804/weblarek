@@ -146,7 +146,7 @@ export interface IOrderResponse {
 `private _buyerCart: IProduct[] = [];` - создаем массив товаров пользователя
 `private productsModel: Products;` - передаем массив всех товаров из класса Products
 `constructor(productsModel: Products)`- в конструктор передаем массив всех товаров
-`addToCart(id: string): boolean` - описываем принцип добавления товаров в корзину. Передаем id товара. Метод должен возврачать true - добавлен, false - товар или не найден или на товар нет цены
+`addToCart(product: IProduct): boolean` - описываем принцип добавления товаров в корзину. Метод должен возврачать true - добавлен, false - товар или не найден или на товар нет цены
 `getCart():IProduct[]` - метод возвращает корзину пользователя для дальнейшего использования
 `deleteProduct(id: string): void` - метод создан для удаления товара из корзины
 `clearCart(): void` - метод создан для очистки корзины

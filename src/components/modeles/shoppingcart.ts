@@ -1,71 +1,41 @@
 import { IProduct } from "../../types/index.ts";
-import { Products } from "../modeles/products.ts";
 
 export class ShoppingCart {
-  private _buyerCart: IProduct[] = [];
-  private productsModel: Products;
-
-  constructor(productsModel: Products) {
-    this.productsModel = productsModel;
+  private buyerCart: IProduct[] = [];
+  getbuyerCartById(id: string):IProduct | undefined {
+    return this.buyerCart.find((product) => product.id !== id)
   }
 
-  addToCart(id: string): boolean {
-    const product = this.productsModel
-      .getItems()
-      .find((product) => product.id === id);
-
-    if (product === undefined) {
-      console.error("Товар не найден");
-      return false;
+    addToCart(product: IProduct): boolean {
+     if (product.price === null) {
+            console.error("Цена не указана, товар нельзя добавить");
+            return false;
+        }
+        
+        this.buyerCart.push(product);
+        return true;
     }
-
-    if (product.price === null) {
-      console.error("Цена не указана, товар нельзя добавить");
-      return false;
-    }
-
-    this._buyerCart.push(product);
-    return true;
-  }
 
   getCart(): IProduct[] {
-    return this._buyerCart;
+    return this.buyerCart;
   }
 
   deleteProduct(id: string): void {
-    const wasPresent = this.hasProduct(id);
-    if (wasPresent) {
-      this._buyerCart = this._buyerCart.filter((product) => product.id !== id);
-    } else {
-      console.error("Данного товара нет в корзине");
-    }
+      this.buyerCart = this.buyerCart.filter((product) => product.id !== id);
   }
 
   clearCart(): void {
-    this._buyerCart = [];
+    this.buyerCart = [];
   }
 
   priceCart(): number {
-    let total = 0;
-    this._buyerCart.forEach((result) => {
-      if (result.price !== null) {
-        total += result.price;
-      } else {
-        console.error("Товар не продается");
-      }
-    });
-    return total;
+    return this.buyerCart.reduce((total, item) => total + (item.price || 0), 0);
   }
   quantityProduct(): number {
-    return this._buyerCart.length;
+    return this.buyerCart.length;
   }
 
   hasProduct(id: string): boolean {
-    const list = this._buyerCart.find((product) => product.id === id);
-    if (list !== undefined) {
-      return true;
-    } else {
-      return false;
-    }
-  }
+return this. buyerCart.some(item => item.id === id) 
+}
 }

@@ -1,4 +1,4 @@
-import { IBuyer } from "../../types/index.ts";
+import { IBuyer, validationErrors } from "../../types/index.ts";
 
 export class Buyer {
   private data: IBuyer = {
@@ -8,7 +8,7 @@ export class Buyer {
     address: "",
   };
 
-  setPayment(payment: "card" | "cash" | null) {
+  setPayment(payment: "card" | "cash") {
     this.data.payment = payment;
   }
 
@@ -37,8 +37,8 @@ export class Buyer {
     };
   }
 
-  validate() {
-    const errors: Partial<Record<keyof IBuyer, string>> = {};
+  validate():void{
+    const errors: validationErrors = {};
 
     if (this.data.payment === null) {
       errors.payment = "Не выбран вид оплаты";
@@ -55,11 +55,5 @@ export class Buyer {
     if (this.data.address === "") {
       errors.address = "Адрес не указан";
     }
-
-    return errors;
-  }
-
-  isValid(): boolean {
-    return Object.keys(this.validate()).length === 0;
   }
 }

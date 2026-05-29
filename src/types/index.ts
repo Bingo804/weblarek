@@ -13,9 +13,10 @@ export interface IProduct {
   category: string;
   price: number | null;
 } 
-
+export type TPayment = 'cash' | 'card';
+  
 export interface IBuyer {
-  payment: 'card' | 'cash' | null;
+  payment: TPayment | null; 
   email: string;
   phone: string;
   address: string;
@@ -38,3 +39,5 @@ export interface IOrderResponse {
     id: string;
     total: number;
 }
+
+export type validationErrors = Partial<Record<keyof IBuyer, string>>

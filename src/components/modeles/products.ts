@@ -1,27 +1,30 @@
 import { IProduct } from "../../types/index.ts";
 
-export class Products {
-  protected _productArr: IProduct[] = [];
-  protected _productCard: IProduct | null = null;
+export class Products{
+  protected productArr: IProduct[] = [];
+  protected productCard: IProduct | null = null;
+  getProductById(id: string): IProduct | undefined {
+    return this.productArr.find((product) => product.id === id)
+  }
 
   setItems(items: IProduct[]): void {
-    this._productArr = items;
+    this.productArr = items;
   }
 
   getItems(): IProduct[] {
-    return this._productArr;
+    return this.productArr;
   }
 
   setCard(id: string): void {
-    const card = this._productArr.find((product) => product.id === id);
+    const card = this.getProductById(id);
     if (card !== undefined) {
-      this._productCard = card;
+      this.productCard = card;
     } else {
       console.error("Данная карточка не обнаружена");
-      this._productCard = null;
+      this.productCard = null;
     }
   }
   getCard(): IProduct | null {
-    return this._productCard;
+    return this.productCard;
   }
 }
