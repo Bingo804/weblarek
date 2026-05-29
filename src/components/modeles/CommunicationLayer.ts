@@ -3,11 +3,13 @@ import {
   IOrderData,
   IOrderResponse,
 } from "../../types/index.ts";
-import { IApi } from "../../types/index.ts"
+import { IApi } from "../../types/index.ts";
+
 export class CommunicationLayer {
   constructor(private api: IApi) {}
+  
   getProducts(): Promise<IProductsResponse> {
-    return this.api.get<IProductsResponse>("/product")
+    return this.api.get<IProductsResponse>("/product");
   }
 
   async sendOrder(orderData: IOrderData): Promise<IOrderResponse> {

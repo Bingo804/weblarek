@@ -32,8 +32,11 @@ buyer.setPhone("+7920002323");
 buyer.setAddress("Moscow");
 buyer.setPayment("card");
 console.log("getData:", buyer.getData());
+console.log("Валидные данные - validate:", buyer.validate());
+
 buyer.clear();
 console.log("clear:", buyer.getData());
+console.log("После clear - validate:", buyer.validate());
 
 const api = new Api(API_URL);
 const communication = new CommunicationLayer(api);

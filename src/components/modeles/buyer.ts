@@ -1,4 +1,4 @@
-import { IBuyer, validationErrors } from "../../types/index.ts";
+import { IBuyer, ValidationErrors, TPayment } from "../../types/index.ts";
 
 export class Buyer {
   private data: IBuyer = {
@@ -8,7 +8,7 @@ export class Buyer {
     address: "",
   };
 
-  setPayment(payment: "card" | "cash") {
+  setPayment(payment: TPayment) {
     this.data.payment = payment;
   }
 
@@ -37,8 +37,8 @@ export class Buyer {
     };
   }
 
-  validate():void{
-    const errors: validationErrors = {};
+  validate(): ValidationErrors {
+    const errors: ValidationErrors = {};
 
     if (this.data.payment === null) {
       errors.payment = "Не выбран вид оплаты";
@@ -55,5 +55,6 @@ export class Buyer {
     if (this.data.address === "") {
       errors.address = "Адрес не указан";
     }
+    return errors;
   }
 }

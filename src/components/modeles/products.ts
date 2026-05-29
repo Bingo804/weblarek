@@ -1,10 +1,11 @@
 import { IProduct } from "../../types/index.ts";
 
-export class Products{
+export class Products {
   protected productArr: IProduct[] = [];
   protected productCard: IProduct | null = null;
+
   getProductById(id: string): IProduct | undefined {
-    return this.productArr.find((product) => product.id === id)
+    return this.productArr.find((product) => product.id === id);
   }
 
   setItems(items: IProduct[]): void {
