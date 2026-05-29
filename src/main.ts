@@ -27,7 +27,7 @@ cart.clearCart();
 console.log("clearCart:", cart.getCart());
 
 const buyer = new Buyer();
-buyer.setEmail("test@yandex..ru");
+buyer.setEmail("test@yandex.ru");
 buyer.setPhone("+7920002323");
 buyer.setAddress("Moscow");
 buyer.setPayment("card");
