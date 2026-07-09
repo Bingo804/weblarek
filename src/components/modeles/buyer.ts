@@ -1,4 +1,5 @@
 import { IBuyer, ValidationErrors, TPayment } from "../../types/index.ts";
+import { IEvents } from "../base/Events";
 
 export class Buyer {
   private data: IBuyer = {
@@ -7,34 +8,44 @@ export class Buyer {
     phone: "",
     address: "",
   };
+  protected events: IEvents;
 
-  setPayment(payment: TPayment) {
+  constructor(events: IEvents) {
+    this.events = events;
+  }
+
+  setPayment(payment: TPayment): void {
     this.data.payment = payment;
+    this.events.emit("buyer:changed");
   }
 
-  setEmail(email: string) {
+  setEmail(email: string): void {
     this.data.email = email;
+    this.events.emit("buyer:changed");
   }
 
-  setPhone(phone: string) {
+  setPhone(phone: string): void {
     this.data.phone = phone;
+    this.events.emit("buyer:changed");
   }
 
-  setAddress(address: string) {
+  setAddress(address: string): void {
     this.data.address = address;
+    this.events.emit("buyer:changed");
   }
 
   getData(): IBuyer {
     return this.data;
   }
 
-  clear() {
+  clear(): void {
     this.data = {
       payment: null,
       email: "",
       phone: "",
       address: "",
     };
+    this.events.emit("buyer:changed");
   }
 
   validate(): ValidationErrors {
@@ -44,17 +55,23 @@ export class Buyer {
       errors.payment = "Не выбран вид оплаты";
     }
 
-    if (this.data.email === "") {
+    if (this.data.address.trim() === "") {
+      errors.address = "Адрес не указан";
+    }
+
+    if (this.data.email.trim() === "") {
       errors.email = "Email не указан";
     }
 
-    if (this.data.phone === "") {
+    if (this.data.phone.trim() === "") {
       errors.phone = "Телефон не указан";
     }
 
-    if (this.data.address === "") {
-      errors.address = "Адрес не указан";
-    }
     return errors;
+  }
+
+  isValid(): boolean {
+    const errors = this.validate();
+    return Object.keys(errors).length === 0;
   }
 }

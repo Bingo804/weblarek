@@ -1,4 +1,4 @@
-import { Component } from "../base/Component.ts";
+import { Component } from "../base/Component";
 
 export interface GalleryData {
   catalog: HTMLElement[];
@@ -13,10 +13,7 @@ export class Gallery extends Component<GalleryData> {
   }
 
   set catalog(items: HTMLElement[]) {
-    this.catalogElement.innerHTML = "";
-    items.forEach((item) => {
-      this.catalogElement.appendChild(item);
-    });
+    this.catalogElement.replaceChildren(...items);
   }
 
   render(data: GalleryData): HTMLElement {

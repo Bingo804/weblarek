@@ -10,317 +10,87 @@ import { apiProducts } from "./utils/data";
 import { Header } from "./components/views/Header";
 import { Gallery } from "./components/views/Gallery";
 import { CardCatalog } from "./components/views/CardCatalog";
+import { CardPreview } from "./components/views/CardPreview";
+import { CardBasket } from "./components/views/CardBasket";
 import { Modal } from "./components/views/Modal";
 import { CartView } from "./components/views/CardView";
-import { OrderForm, IOrderData } from "./components/views/OrderForm";
-import { ContactsForm, IContactsData } from "./components/views/ContactsForm";
+import { OrderForm } from "./components/views/OrderForm";
+import { ContactsForm } from "./components/views/ContactsForm";
 import { SuccessView } from "./components/views/SuccessView";
+import { cloneTemplate, ensureElement } from "./utils/utils";
+import { IProduct } from "../src/types/index";
 
 const events = new EventEmitter();
 
-//МОДЕЛИ
-
-const productsModel = new Products();
-productsModel.setItems(apiProducts.items);
-console.log("getItems:", productsModel.getItems());
-
-const cart = new ShoppingCart();
-const buyer = new Buyer();
-
+const productsModel = new Products(events);
+const cart = new ShoppingCart(events);
+const buyer = new Buyer(events);
 const api = new Api(API_URL);
 const communication = new CommunicationLayer(api);
-const productsCatalog = new Products();
 
-//ШАПКА
-
-const headerContainer = document.querySelector(
-  ".header__container",
-) as HTMLElement;
+const headerContainer = ensureElement<HTMLElement>(".header__container");
 const header = new Header(events, headerContainer);
-header.render({ counter: 0 });
 
-//МОДАЛКА
-
-const modalContainer = document.querySelector(
-  "#modal-container",
-) as HTMLElement;
+const modalContainer = ensureElement<HTMLElement>("#modal-container");
 const modal = new Modal(modalContainer);
 
-events.on("basket:open", () => {
-  openCartModal();
+const galleryContainer = ensureElement<HTMLElement>(".gallery");
+const gallery = new Gallery(galleryContainer);
+
+const basketTemplate = ensureElement<HTMLTemplateElement>("#basket");
+const orderTemplate = ensureElement<HTMLTemplateElement>("#order");
+const contactsTemplate = ensureElement<HTMLTemplateElement>("#contacts");
+const successTemplate = ensureElement<HTMLTemplateElement>("#success");
+const cardCatalogTemplate = ensureElement<HTMLTemplateElement>("#card-catalog");
+const cardPreviewTemplate = ensureElement<HTMLTemplateElement>("#card-preview");
+const cardBasketTemplate = ensureElement<HTMLTemplateElement>("#card-basket");
+let currentOrderForm: OrderForm | null = null;
+let currentContactsForm: ContactsForm | null = null;
+
+events.on("catalog:changed", () => {
+  renderCatalog();
 });
 
-events.on<IOrderData>("order:submit", (data) => {
-  buyer.setAddress(data.address);
-  buyer.setPayment(data.payment as "card" | "cash");
+events.on("basket:changed", () => {
+  header.counter = cart.quantityProduct();
+});
+
+events.on("basket:open", () => {
+  openModalWithCart();
+});
+
+events.on("order:submit", () => {
   openContactsForm();
 });
 
-events.on<IContactsData>("contacts:submit", async (data) => {
+events.on("contacts:submit", async () => {
+  await handleOrderSubmit();
+});
+
+events.on("order:payment-select", (data: { payment: "card" | "cash" }) => {
+  buyer.setPayment(data.payment);
+});
+
+events.on("order:address-input", (data: { address: string }) => {
+  buyer.setAddress(data.address);
+});
+
+events.on("contacts:email-input", (data: { email: string }) => {
   buyer.setEmail(data.email);
+});
+
+events.on("contacts:phone-input", (data: { phone: string }) => {
   buyer.setPhone(data.phone);
-
-  if (!buyer.validate()) return;
-
-  const orderData = {
-    ...buyer.getData(),
-    items: cartItems.map((item) => item.id),
-    total: getTotalPrice(),
-  };
-
-  try {
-    clearCart();
-    buyer.clear();
-    openSuccessModal(orderData.total);
-  } catch (error) {
-    console.error(error);
-  }
 });
 
-//СОБЫТИЕ КОРЗИНЫ
-
-document.addEventListener("cart:remove", (e: any) => {
-  const { id } = e.detail;
-  console.log(`Удаление товара ${id} из корзины`);
-  removeFromCart(id);
-  openCartModal();
-});
-
-document.addEventListener("cart:order", () => {
-  console.log("Оформление заказа");
-  openOrderForm();
-});
-
-//КОРЗИНА
-
-let cartItems: any[] = [];
-
-function addToCart(product: any): void {
-  if (!cartItems.some((item) => item.id === product.id)) {
-    cartItems.push(product);
-    cart.addToCart(product);
-    header.render({ counter: cartItems.length });
-    console.log(`Добавлен: ${product.title}`);
-  }
-}
-
-function removeFromCart(id: string): void {
-  cartItems = cartItems.filter((item) => item.id !== id);
-  cart.deleteProduct(id);
-  header.render({ counter: cartItems.length });
-  console.log(`Удален: ${id}`);
-}
-
-function isInCart(id: string): boolean {
-  return cartItems.some((item) => item.id === id);
-}
-
-function getTotalPrice(): number {
-  return cartItems.reduce((sum, item) => sum + item.price, 0);
-}
-
-function clearCart(): void {
-  cartItems = [];
-  cart.clearCart();
-  header.render({ counter: 0 });
-}
-
-//ОТКРЫТИЕ КОРЗИНЫ
-
-function openCartModal(): void {
-  const template = document.querySelector("#basket") as HTMLTemplateElement;
-  const clone = template.content.firstElementChild?.cloneNode(
-    true,
-  ) as HTMLElement;
-  if (!clone) return;
-
-  const cartView = new CartView(clone);
-  cartView.render({
-    items: cartItems,
-    total: getTotalPrice(),
-  });
-
-  const orderButton = clone.querySelector(
-    ".basket__button",
-  ) as HTMLButtonElement;
-  if (orderButton) {
-    orderButton.addEventListener("click", () => {
-      openOrderForm();
-    });
-  }
-
-  modal.render(clone);
-}
-
-//ФОРМА ЗАКАЗА
-
-function openOrderForm(): void {
-  const template = document.querySelector("#order") as HTMLTemplateElement;
-
-  if (!template) {
-    console.error("Шаблон #order не найден");
-    return;
-  }
-
-  const clone = template.content.cloneNode(true) as DocumentFragment;
-  const form = clone.querySelector("form.form") as HTMLElement;
-
-  if (!form) {
-    console.error("Форма в #order не найдена");
-    return;
-  }
-
-  const orderForm = new OrderForm(form as HTMLElement, events);
-  orderForm.render({
-    address: "",
-    payment: null,
-  });
-
-  modal.render(form);
-}
-
-//ФОРМА КОНТАКТОВ
-
-function openContactsForm(): void {
-  const template = document.querySelector("#contacts") as HTMLTemplateElement;
-
-  if (!template) {
-    console.error("Шаблон #contacts не найден");
-    return;
-  }
-
-  const fragment = template.content.cloneNode(true) as DocumentFragment;
-  const form = fragment.querySelector("form.form") as HTMLElement;
-
-  if (!form) {
-    console.error("Форма в #contacts не найдена");
-    return;
-  }
-
-  const contactsForm = new ContactsForm(form, events);
-  contactsForm.render({
-    email: "",
-    phone: "",
-  });
-
-  modal.render(form);
-}
-
-//МОДАЛКА УСПЕШНОГО ОФОРМЛЕНИЯ
-
-function openSuccessModal(total: number): void {
-  const template = document.querySelector("#success") as HTMLTemplateElement;
-  const clone = template.content.firstElementChild?.cloneNode(
-    true,
-  ) as HTMLElement;
-  if (!clone) return;
-
-  const successView = new SuccessView(clone);
-  successView.render({ total });
-  successView.onClose(() => modal.close());
-
-  modal.render(clone);
-}
-
-//ПРЕДПРОСМОТР ТОВАРА
-
-function openProductModal(product: any): void {
-  const template = document.querySelector(
-    "#card-preview",
-  ) as HTMLTemplateElement;
-  const clone = template.content.firstElementChild?.cloneNode(
-    true,
-  ) as HTMLElement;
-  if (!clone) return;
-
-  const image = clone.querySelector(".card__image") as HTMLImageElement;
-  const category = clone.querySelector(".card__category") as HTMLElement;
-  const title = clone.querySelector(".card__title") as HTMLElement;
-  const description = clone.querySelector(".card__text") as HTMLElement;
-  const price = clone.querySelector(".card__price") as HTMLElement;
-  const button = clone.querySelector(".card__button") as HTMLButtonElement;
-
-  if (image) {
-    image.src = `${CDN_URL}/${product.image}`;
-    image.alt = product.title;
-  }
-
-  if (category) {
-    category.textContent = product.category || "другое";
-    category.className = "card__category";
-    const catMap: Record<string, string> = {
-      "софт-скил": "card__category_soft",
-      "хард-скил": "card__category_hard",
-      кнопка: "card__category_button",
-      дополнительное: "card__category_additional",
-      другое: "card__category_other",
-    };
-    const cssClass = catMap[product.category];
-    if (cssClass) category.classList.add(cssClass);
-  }
-
-  if (title) title.textContent = product.title;
-  if (description)
-    description.textContent = product.description || "Описание товара";
-
-  const hasPrice =
-    product.price !== undefined && product.price !== null && product.price > 0;
-  if (price) {
-    price.textContent = hasPrice ? `${product.price} синапсов` : "Бесплатно";
-  }
-
-  if (button) {
-    if (!hasPrice) {
-      button.textContent = "Недоступно";
-      button.disabled = true;
-      button.onclick = null;
-    } else {
-      const inCart = isInCart(product.id);
-      if (inCart) {
-        button.textContent = "Удалить из корзины";
-        button.disabled = false;
-        button.onclick = (e) => {
-          e.stopPropagation();
-          removeFromCart(product.id);
-          modal.close();
-        };
-      } else {
-        // Текст "В корзину" из шаблона — НЕ МЕНЯЕМ!
-        button.disabled = false;
-        button.onclick = (e) => {
-          e.stopPropagation();
-          addToCart(product);
-          modal.close();
-        };
-      }
-    }
-  }
-
-  modal.render(clone);
-}
-
-//РЕНДЕРИНГ КАТАЛОГА
-
-function renderCatalog(products: any[]): void {
-  const template = document.querySelector(
-    "#card-catalog",
-  ) as HTMLTemplateElement;
-  const galleryContainer = document.querySelector(".gallery") as HTMLElement;
-
-  if (!template || !galleryContainer) {
-    console.error("Шаблон или галерея не найдены");
-    return;
-  }
-
+function renderCatalog(): void {
+  const products = productsModel.getItems();
   const cardElements: HTMLElement[] = [];
 
   products.forEach((product) => {
-    const clone = template.content.firstElementChild?.cloneNode(
-      true,
-    ) as HTMLElement;
-    if (!clone) return;
-
+    const clone = cloneTemplate(cardCatalogTemplate);
     const card = new CardCatalog(clone);
+
     card.render({
       id: product.id,
       image: `${CDN_URL}/${product.image}`,
@@ -330,35 +100,183 @@ function renderCatalog(products: any[]): void {
     });
 
     clone.addEventListener("click", () => {
-      openProductModal(product);
+      openProductPreview(product);
     });
 
     cardElements.push(clone);
   });
 
-  const gallery = new Gallery(galleryContainer);
-  gallery.render({ catalog: cardElements });
-
-  console.log(`Отрендерено ${cardElements.length} карточек`);
+  gallery.catalog = cardElements;
 }
 
-//ЗАГРУЗКА ДАННЫХ С СЕРВЕРА
+function openProductPreview(product: IProduct): void {
+  const clone = cloneTemplate(cardPreviewTemplate);
+  const preview = new CardPreview(clone);
 
-async function loadCatalog() {
+  const hasPrice = product.price !== null && product.price > 0;
+  const inCart = cart.hasProduct(product.id);
+
+  let buttonText = "В корзину";
+  let buttonDisabled = false;
+
+  if (!hasPrice) {
+    buttonText = "Недоступно";
+    buttonDisabled = true;
+  } else if (inCart) {
+    buttonText = "Удалить из корзины";
+  }
+
+  preview.render({
+    id: product.id,
+    image: `${CDN_URL}/${product.image}`,
+    title: product.title,
+    price: product.price,
+    category: product.category,
+    description: product.description || "Описание товара",
+    buttonText: buttonText,
+    buttonDisabled: buttonDisabled,
+  });
+
+  preview.buttonHandler = () => {
+    if (!hasPrice) return;
+
+    if (cart.hasProduct(product.id)) {
+      cart.deleteProduct(product.id);
+    } else {
+      cart.addToCart(product);
+    }
+    modal.close();
+  };
+
+  modal.render({ content: clone });
+}
+
+function openModalWithCart(): void {
+  const clone = cloneTemplate(basketTemplate);
+  const cartView = new CartView(clone);
+
+  const items = cart.getCart();
+  const itemElements: HTMLElement[] = [];
+
+  items.forEach((item, index) => {
+    const itemClone = cloneTemplate(cardBasketTemplate);
+    const cardBasket = new CardBasket(itemClone);
+
+    cardBasket.render({
+      id: item.id,
+      title: item.title,
+      price: item.price,
+      index: index + 1,
+      deleteHandler: () => {
+        cart.deleteProduct(item.id);
+        openModalWithCart();
+      },
+    });
+
+    itemElements.push(itemClone);
+  });
+
+  cartView.render({
+    items: itemElements,
+    total: cart.priceCart(),
+    buttonDisabled: cart.quantityProduct() === 0,
+  });
+
+  cartView.orderHandler = () => {
+    openOrderForm();
+  };
+
+  modal.render({ content: clone });
+}
+
+function openOrderForm(): void {
+  const fragment = orderTemplate.content.cloneNode(true) as DocumentFragment;
+  const form = fragment.querySelector("form.form") as HTMLElement;
+  if (!form) return;
+
+  const orderForm = new OrderForm(form, events);
+  const data = buyer.getData();
+  orderForm.address = data.address;
+  orderForm.payment = data.payment;
+
+  modal.render({ content: form });
+}
+
+function openContactsForm(): void {
+  const fragment = contactsTemplate.content.cloneNode(true) as DocumentFragment;
+  const form = fragment.querySelector("form.form") as HTMLElement;
+  if (!form) return;
+
+  const contactsForm = new ContactsForm(form, events);
+  const data = buyer.getData();
+  contactsForm.email = data.email;
+  contactsForm.phone = data.phone;
+
+  modal.render({ content: form });
+}
+
+async function handleOrderSubmit(): Promise<void> {
+  // Проверяем что все поля заполнены
+  if (!buyer.isValid()) {
+    console.warn("Форма не валидна");
+    return;
+  }
+
+  // Проверяем что корзина не пуста
+  if (cart.quantityProduct() === 0) {
+    console.warn("Корзина пуста");
+    return;
+  }
+
+  // Собираем данные для отправки
+  const orderData = {
+    payment: buyer.getData().payment!,
+    email: buyer.getData().email,
+    phone: buyer.getData().phone,
+    address: buyer.getData().address,
+    items: cart.getCart().map((item) => item.id),
+    total: cart.priceCart(),
+  };
+
+  console.log("Отправка заказа:", orderData);
+
   try {
-    console.log("Загрузка каталога...");
-    const response = await communication.getProducts();
-    const productsArray = response.items;
-    productsCatalog.setItems(productsArray);
-    console.log("Каталог загружен:", productsCatalog.getItems());
-    renderCatalog(productsArray);
+    // Отправляем на сервер
+    const response = await communication.sendOrder(orderData);
+    console.log("Сервер ответил:", response);
+
+    // Очищаем корзину и данные покупателя
+    cart.clearCart();
+    buyer.clear();
+
+    // Закрываем модалку
+    modal.close();
+
+    // Показываем окно успеха
+    openSuccessModal(orderData.total);
   } catch (error) {
-    console.error("Ошибка:", error);
-    console.warn("Использую локальные данные");
-    renderCatalog(apiProducts.items);
+    console.error("❌ Ошибка:", error);
+    // Показываем ошибку в форме
+    if (currentContactsForm) {
+      currentContactsForm.errors = "Ошибка при отправке заказа";
+    }
   }
 }
 
-//ЗАПУСК
+function openSuccessModal(total: number): void {
+  const clone = cloneTemplate(successTemplate);
+  const successView = new SuccessView(clone, () => modal.close());
+  successView.render({ total });
+  modal.render({ content: clone });
+}
+
+async function loadCatalog(): Promise<void> {
+  try {
+    const response = await communication.getProducts();
+    productsModel.setItems(response.items);
+  } catch (error) {
+    productsModel.setItems(apiProducts.items);
+  }
+}
 
 loadCatalog();

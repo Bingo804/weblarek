@@ -1,24 +1,23 @@
 import { Component } from "../base/Component";
+import { ensureElement } from "../../utils/utils";
 
-export class Modal extends Component<HTMLElement> {
+export interface IModalData {
+  content: HTMLElement;
+}
+
+export class Modal extends Component<IModalData> {
   private closeButton: HTMLElement;
   private contentElement: HTMLElement;
 
   constructor(container: HTMLElement) {
     super(container);
 
-    this.closeButton = container.querySelector(".modal__close") as HTMLElement;
-    this.contentElement = container.querySelector(
+    this.closeButton = ensureElement<HTMLElement>(".modal__close", container);
+    this.contentElement = ensureElement<HTMLElement>(
       ".modal__content",
-    ) as HTMLElement;
+      container,
+    );
 
-    if (!this.closeButton) throw new Error(".modal__close не найден");
-    if (!this.contentElement) throw new Error(".modal__content не найден");
-
-    this.initEvents();
-  }
-
-  private initEvents(): void {
     this.closeButton.addEventListener("click", () => this.close());
 
     this.container.addEventListener("click", (e) => {
@@ -26,33 +25,24 @@ export class Modal extends Component<HTMLElement> {
         this.close();
       }
     });
-
-    document.addEventListener("keydown", (e) => {
-      if (e.key === "Escape" && this.isOpen()) {
-        this.close();
-      }
-    });
   }
 
-  render(content: HTMLElement): HTMLElement {
+  set content(value: HTMLElement) {
+    this.contentElement.replaceChildren(value);
+  }
+
+  open(): void {
+    this.container.classList.add("modal_active");
+  }
+
+  close(): void {
+    this.container.classList.remove("modal_active");
     this.contentElement.innerHTML = "";
-    this.contentElement.appendChild(content);
+  }
+
+  render(data: IModalData): HTMLElement {
+    this.content = data.content;
     this.open();
     return this.container;
-  }
-
-  private open(): void {
-    this.container.classList.add("modal_active");
-    document.body.style.overflow = "hidden";
-  }
-
-  public close(): void {
-    this.container.classList.remove("modal_active");
-    document.body.style.overflow = "";
-    this.contentElement.innerHTML = "";
-  }
-
-  private isOpen(): boolean {
-    return this.container.classList.contains("modal_active");
   }
 }

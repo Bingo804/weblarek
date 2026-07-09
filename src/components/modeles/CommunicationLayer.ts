@@ -7,12 +7,12 @@ import { IApi } from "../../types/index.ts";
 
 export class CommunicationLayer {
   constructor(private api: IApi) {}
-  
+
   getProducts(): Promise<IProductsResponse> {
     return this.api.get<IProductsResponse>("/product");
   }
 
-  async sendOrder(orderData: IOrderData): Promise<IOrderResponse> {
+  sendOrder(orderData: IOrderData): Promise<IOrderResponse> {
     return this.api.post("/order", orderData) as Promise<IOrderResponse>;
   }
 }

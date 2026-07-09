@@ -1,8 +1,14 @@
 import { IProduct } from "../../types/index.ts";
+import { IEvents } from "../base/Events";
 
 export class Products {
   protected productArr: IProduct[] = [];
   protected productCard: IProduct | null = null;
+  protected events: IEvents;
+
+  constructor(events: IEvents) {
+    this.events = events;
+  }
 
   getProductById(id: string): IProduct | undefined {
     return this.productArr.find((product) => product.id === id);
@@ -10,6 +16,7 @@ export class Products {
 
   setItems(items: IProduct[]): void {
     this.productArr = items;
+    this.events.emit("catalog:changed", { items: this.productArr });
   }
 
   getItems(): IProduct[] {
@@ -21,10 +28,11 @@ export class Products {
     if (card !== undefined) {
       this.productCard = card;
     } else {
-      console.error("Данная карточка не обнаружена");
       this.productCard = null;
     }
+    this.events.emit("catalog:card-changed", { card: this.productCard });
   }
+
   getCard(): IProduct | null {
     return this.productCard;
   }

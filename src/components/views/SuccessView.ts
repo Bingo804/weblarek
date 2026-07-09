@@ -1,4 +1,5 @@
 import { Component } from "../base/Component";
+import { ensureElement } from "../../utils/utils";
 
 export interface ISuccessData {
   total: number;
@@ -7,27 +8,32 @@ export interface ISuccessData {
 export class SuccessView extends Component<ISuccessData> {
   private description: HTMLElement;
   private closeButton: HTMLButtonElement;
+  private onCloseCallback: () => void;
 
-  constructor(container: HTMLElement) {
+  constructor(container: HTMLElement, onClose: () => void) {
     super(container);
-    this.description = container.querySelector(
+    this.onCloseCallback = onClose;
+
+    this.description = ensureElement<HTMLElement>(
       ".order-success__description",
-    ) as HTMLElement;
-    this.closeButton = container.querySelector(
+      container,
+    );
+    this.closeButton = ensureElement<HTMLButtonElement>(
       ".order-success__close",
-    ) as HTMLButtonElement;
+      container,
+    );
+
+    this.closeButton.addEventListener("click", () => {
+      this.onCloseCallback();
+    });
+  }
+
+  set total(value: number) {
+    this.description.textContent = `Списано ${value} синапсов`;
   }
 
   render(data: ISuccessData): HTMLElement {
-    if (this.description) {
-      this.description.textContent = `Списано ${data.total} синапсов`;
-    }
+    this.total = data.total;
     return this.container;
-  }
-
-  onClose(callback: () => void): void {
-    if (this.closeButton) {
-      this.closeButton.addEventListener("click", callback);
-    }
   }
 }
