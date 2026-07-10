@@ -1,10 +1,11 @@
 import { Form, IFormData } from "./Form";
 import { IEvents } from "../base/Events";
 import { ensureElement } from "../../utils/utils";
+import { TPayment } from "../../types/index";
 
 export interface IOrderFormData extends IFormData {
   address: string;
-  payment: "card" | "cash" | null;
+  payment: TPayment | null;
 }
 
 export class OrderForm extends Form<IOrderFormData> {
@@ -12,10 +13,7 @@ export class OrderForm extends Form<IOrderFormData> {
   protected cardBtn: HTMLButtonElement;
   protected cashBtn: HTMLButtonElement;
 
-  private _payment: "card" | "cash" | null = null;
-  private _address: string = "";
-
-  constructor(container: HTMLElement, events: IEvents) {
+  constructor(container: HTMLFormElement, events: IEvents) {
     super(container, events);
 
     this.addressInput = ensureElement<HTMLInputElement>(
@@ -25,53 +23,38 @@ export class OrderForm extends Form<IOrderFormData> {
     this.cardBtn = ensureElement<HTMLButtonElement>('[name="card"]', container);
     this.cashBtn = ensureElement<HTMLButtonElement>('[name="cash"]', container);
 
-    this.cardBtn.addEventListener("click", (e) => {
-      e.preventDefault();
-      this._payment = "card";
-      this.updateUI();
+    this.cardBtn.addEventListener("click", () => {
       this.events.emit("order:payment-select", { payment: "card" });
     });
 
-    this.cashBtn.addEventListener("click", (e) => {
-      e.preventDefault();
-      this._payment = "cash";
-      this.updateUI();
+    this.cashBtn.addEventListener("click", () => {
       this.events.emit("order:payment-select", { payment: "cash" });
     });
 
     this.addressInput.addEventListener("input", () => {
-      this._address = this.addressInput.value.trim();
-      this.updateUI();
-      this.events.emit("order:address-input", { address: this._address });
+      this.events.emit("order:address-input", {
+        address: this.addressInput.value.trim(),
+      });
     });
   }
 
-  private updateUI(): void {
+  set address(value: string) {
+    this.addressInput.value = value;
+  }
+
+  set payment(value: TPayment | null) {
     this.cardBtn.classList.remove("button_alt");
     this.cashBtn.classList.remove("button_alt");
-    if (this._payment === "card") this.cardBtn.classList.add("button_alt");
-    if (this._payment === "cash") this.cashBtn.classList.add("button_alt");
 
-    const isValid = this._payment !== null && this._address.length > 0;
-    this.valid = isValid;
-
-    if (!this._payment) {
-      this.errors = "Выберите способ оплаты";
-    } else if (!this._address) {
-      this.errors = "Введите адрес";
-    } else {
-      this.errors = "";
-    }
+    if (value === "card") this.cardBtn.classList.add("button_alt");
+    if (value === "cash") this.cashBtn.classList.add("button_alt");
   }
 
-  set address(value: string) {
-    this._address = value;
-    this.addressInput.value = value;
-    this.updateUI();
+  set valid(value: boolean) {
+    this.submitButton.disabled = !value;
   }
 
-  set payment(value: "card" | "cash" | null) {
-    this._payment = value;
-    this.updateUI();
+  set errors(value: string) {
+    this.errorsElement.textContent = value;
   }
 }

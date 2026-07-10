@@ -16,7 +16,7 @@ export class Products {
 
   setItems(items: IProduct[]): void {
     this.productArr = items;
-    this.events.emit("catalog:changed", { items: this.productArr });
+    this.events.emit("catalog:changed");
   }
 
   getItems(): IProduct[] {
@@ -30,7 +30,7 @@ export class Products {
     } else {
       this.productCard = null;
     }
-    this.events.emit("catalog:card-changed", { card: this.productCard });
+    this.events.emit("catalog:card-changed");
   }
 
   getCard(): IProduct | null {

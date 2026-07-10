@@ -69,9 +69,4 @@ export class Buyer {
 
     return errors;
   }
-
-  isValid(): boolean {
-    const errors = this.validate();
-    return Object.keys(errors).length === 0;
-  }
 }

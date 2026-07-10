@@ -8,27 +8,24 @@ export interface IFormData {
 }
 
 export abstract class Form<T extends IFormData> extends Component<T> {
-  protected form: HTMLFormElement;
   protected submitButton: HTMLButtonElement;
   protected errorsElement: HTMLElement;
   protected events: IEvents;
 
-  constructor(container: HTMLElement, events: IEvents) {
+  constructor(container: HTMLFormElement, events: IEvents) {
     super(container);
     this.events = events;
 
-    this.form = container as HTMLFormElement;
     this.submitButton = ensureElement<HTMLButtonElement>(
       'button[type="submit"]',
       container,
     );
     this.errorsElement = ensureElement<HTMLElement>(".form__errors", container);
 
-    this.form.addEventListener("submit", (e) => {
+    this.container.addEventListener("submit", (e) => {
       e.preventDefault();
-      if (!this.submitButton.disabled) {
-        this.events.emit(`${this.form.name}:submit`);
-      }
+      const form = this.container as HTMLFormElement;
+      this.events.emit(`${form.name}:submit`);
     });
   }
 

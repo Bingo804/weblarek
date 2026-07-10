@@ -13,6 +13,6 @@ export class CommunicationLayer {
   }
 
   sendOrder(orderData: IOrderData): Promise<IOrderResponse> {
-    return this.api.post("/order", orderData) as Promise<IOrderResponse>;
+    return this.api.post<IOrderResponse>("/order", orderData);
   }
 }

@@ -17,7 +17,7 @@ export class ShoppingCart {
       return false;
     }
     this.buyerCart.push(product);
-    this.events.emit("basket:changed", { items: this.buyerCart });
+    this.events.emit("basket:changed");
     return true;
   }
 
@@ -27,12 +27,11 @@ export class ShoppingCart {
 
   deleteProduct(id: string): void {
     this.buyerCart = this.buyerCart.filter((product) => product.id !== id);
-    this.events.emit("basket:changed", { items: this.buyerCart });
+    this.events.emit("basket:changed");
   }
-
   clearCart(): void {
     this.buyerCart = [];
-    this.events.emit("basket:changed", { items: this.buyerCart });
+    this.events.emit("basket:changed");
   }
 
   priceCart(): number {
