@@ -1,6 +1,7 @@
 import { Card, ICardData } from "./Card";
 import { ensureElement } from "../../utils/utils";
 import { categoryMap } from "../../utils/constants";
+import { IEvents } from "../base/Events";
 
 export interface ICardPreviewData extends ICardData {
   image: string;
@@ -15,9 +16,11 @@ export class CardPreview extends Card<ICardPreviewData> {
   protected categoryElement: HTMLElement;
   protected descriptionElement: HTMLElement;
   protected buttonElement: HTMLButtonElement;
+  protected events: IEvents;
 
-  constructor(container: HTMLElement) {
+  constructor(container: HTMLElement, events: IEvents) {
     super(container);
+    this.events = events;
 
     this.imageElement = ensureElement<HTMLImageElement>(
       ".card__image",
@@ -35,6 +38,11 @@ export class CardPreview extends Card<ICardPreviewData> {
       ".card__button",
       container,
     );
+
+    this.buttonElement.addEventListener("click", (e) => {
+      e.stopPropagation();
+      this.events.emit("card:action");
+    });
   }
 
   set image(value: string) {
@@ -60,12 +68,5 @@ export class CardPreview extends Card<ICardPreviewData> {
 
   set buttonDisabled(value: boolean) {
     this.buttonElement.disabled = value;
-  }
-
-  set buttonHandler(callback: () => void) {
-    this.buttonElement.onclick = (e) => {
-      e.stopPropagation();
-      callback();
-    };
   }
 }

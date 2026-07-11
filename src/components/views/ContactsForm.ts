@@ -25,13 +25,13 @@ export class ContactsForm extends Form<IContactsFormData> {
 
     this.emailInput.addEventListener("input", () => {
       this.events.emit("contacts:email-input", {
-        email: this.emailInput.value.trim(),
+        email: this.emailInput.value,
       });
     });
 
     this.phoneInput.addEventListener("input", () => {
       this.events.emit("contacts:phone-input", {
-        phone: this.phoneInput.value.trim(),
+        phone: this.phoneInput.value,
       });
     });
   }
@@ -42,13 +42,5 @@ export class ContactsForm extends Form<IContactsFormData> {
 
   set phone(value: string) {
     this.phoneInput.value = value;
-  }
-
-  set valid(value: boolean) {
-    this.submitButton.disabled = !value;
-  }
-
-  set errors(value: string) {
-    this.errorsElement.textContent = value;
   }
 }

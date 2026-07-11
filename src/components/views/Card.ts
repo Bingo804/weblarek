@@ -2,7 +2,6 @@ import { Component } from "../base/Component";
 import { ensureElement } from "../../utils/utils";
 
 export interface ICardData {
-  id: string;
   title: string;
   price: number | null;
 }

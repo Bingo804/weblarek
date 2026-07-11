@@ -16,10 +16,7 @@ export class OrderForm extends Form<IOrderFormData> {
   constructor(container: HTMLFormElement, events: IEvents) {
     super(container, events);
 
-    this.addressInput = ensureElement<HTMLInputElement>(
-      '[name="address"]',
-      container,
-    );
+    this.addressInput = ensureElement<HTMLInputElement>('[name="address"]', container);
     this.cardBtn = ensureElement<HTMLButtonElement>('[name="card"]', container);
     this.cashBtn = ensureElement<HTMLButtonElement>('[name="cash"]', container);
 
@@ -33,7 +30,7 @@ export class OrderForm extends Form<IOrderFormData> {
 
     this.addressInput.addEventListener("input", () => {
       this.events.emit("order:address-input", {
-        address: this.addressInput.value.trim(),
+        address: this.addressInput.value,
       });
     });
   }
@@ -48,13 +45,5 @@ export class OrderForm extends Form<IOrderFormData> {
 
     if (value === "card") this.cardBtn.classList.add("button_alt");
     if (value === "cash") this.cashBtn.classList.add("button_alt");
-  }
-
-  set valid(value: boolean) {
-    this.submitButton.disabled = !value;
-  }
-
-  set errors(value: string) {
-    this.errorsElement.textContent = value;
   }
 }
