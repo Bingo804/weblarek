@@ -85,10 +85,6 @@ events.on("basket:changed", () => {
   renderBasketItems();
 });
 
-events.on("basket:remove", (data: { productId: string }) => {
-  cart.deleteProduct(data.productId);
-});
-
 events.on("buyer:changed", () => {
   const data = buyer.getData();
   const errors = buyer.validate();
@@ -188,13 +184,14 @@ function renderBasketItems(): void {
 
   items.forEach((item, index) => {
     const itemClone = cloneTemplate(cardBasketTemplate);
-    const cardBasket = new CardBasket(itemClone, events);
+    const cardBasket = new CardBasket(itemClone, () => {
+      cart.deleteProduct(item.id);
+    });
 
     cardBasket.render({
       title: item.title,
       price: item.price,
       index: index + 1,
-      productId: item.id,
     });
 
     itemElements.push(itemClone);
